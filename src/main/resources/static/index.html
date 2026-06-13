@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TaskFlow — Task Manager</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+  *{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --bg:#0B1120;--surface:#141E30;--card:#1A2640;--border:#1E3050;--border2:#263859;
+    --text:#E2E8F0;--muted:#7C90AA;--accent:#6366F1;--accent-dim:#1E1F4A;
+    --green:#10B981;--green-dim:#062318;--amber:#F59E0B;--amber-dim:#2A1F06;
+    --red:#EF4444;--red-dim:#2D1010;--sans:'DM Sans',sans-serif;--mono:'JetBrains Mono',monospace;
+  }
+  body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:14px;min-height:100vh}
+  .layout{display:grid;grid-template-columns:240px 1fr;min-height:100vh}
+  .sidebar{background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column}
+  .logo{padding:20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+  .logo-icon{width:30px;height:30px;background:var(--accent);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:15px}
+  .logo-text{font-size:14px;font-weight:600;color:var(--text)}
+  .logo-sub{font-size:11px;color:var(--muted);font-family:var(--mono)}
+  .sidebar-section{padding:16px 12px 8px;font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+  .nav-item{display:flex;align-items:center;gap:10px;padding:8px 16px;border-radius:8px;margin:1px 8px;cursor:pointer;font-size:13px;color:var(--muted);transition:all .15s;border:none;background:none;width:calc(100% - 16px);text-align:left}
+  .nav-item:hover{background:rgba(255,255,255,.04);color:var(--text)}
+  .nav-item.active{background:var(--accent-dim);color:var(--accent)}
+  .nav-item i{font-size:16px;width:18px;text-align:center}
+  .nav-count{margin-left:auto;background:rgba(255,255,255,.07);color:var(--muted);font-size:10px;font-family:var(--mono);padding:2px 6px;border-radius:20px}
+  .nav-item.active .nav-count{background:rgba(99,102,241,.2);color:var(--accent)}
+  .sidebar-stats{padding:12px;margin-top:auto;border-top:1px solid var(--border)}
+  .stat-mini{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:8px}
+  .stat-mini-label{font-size:11px;color:var(--muted);margin-bottom:6px}
+  .stat-mini-bar{height:4px;background:var(--border2);border-radius:2px;margin-bottom:6px;overflow:hidden}
+  .stat-mini-fill{height:100%;border-radius:2px;background:linear-gradient(90deg,var(--accent),#818CF8);transition:width .6s ease}
+  .stat-mini-nums{display:flex;justify-content:space-between;font-size:11px;font-family:var(--mono)}
+  .stat-mini-done{color:var(--green)}
+  .stat-mini-total{color:var(--muted)}
+  .main{display:flex;flex-direction:column;overflow:auto}
+  .topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:0 24px;height:56px;display:flex;align-items:center;gap:16px;position:sticky;top:0;z-index:10}
+  .topbar-title{font-size:15px;font-weight:600}
+  .topbar-sub{font-size:12px;color:var(--muted);font-family:var(--mono)}
+  .search-wrap{flex:1;max-width:340px;margin-left:auto;position:relative}
+  .search-wrap i{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:15px}
+  .search-input{width:100%;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:7px 12px 7px 32px;color:var(--text);font-size:13px;font-family:var(--sans);outline:none;transition:border-color .15s}
+  .search-input::placeholder{color:var(--muted)}
+  .search-input:focus{border-color:var(--accent)}
+  .btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:8px;font-size:13px;font-weight:500;font-family:var(--sans);cursor:pointer;border:none;transition:all .15s}
+  .btn-primary{background:var(--accent);color:#fff}
+  .btn-primary:hover{background:#5254CC}
+  .btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--border)}
+  .btn-ghost:hover{background:rgba(255,255,255,.04);color:var(--text)}
+  .content{padding:24px;flex:1}
+  .metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px}
+  .metric-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;position:relative;overflow:hidden}
+  .metric-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
+  .metric-card.blue::before{background:var(--accent)}
+  .metric-card.green::before{background:var(--green)}
+  .metric-card.amber::before{background:var(--amber)}
+  .metric-card.red::before{background:var(--red)}
+  .metric-label{font-size:11px;color:var(--muted);font-weight:500;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px}
+  .metric-value{font-size:26px;font-weight:600;line-height:1;margin-bottom:4px;font-family:var(--mono)}
+  .metric-delta{font-size:11px;color:var(--muted)}
+  .task-area{display:grid;grid-template-columns:1fr 300px;gap:16px}
+  .panel{background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+  .panel-header{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+  .panel-title{font-size:13px;font-weight:600}
+  .panel-badge{font-size:10px;font-family:var(--mono);padding:2px 7px;border-radius:20px;background:rgba(255,255,255,.06);color:var(--muted);margin-left:auto}
+  .chips{display:flex;gap:6px;padding:12px 16px;border-bottom:1px solid var(--border)}
+  .chip{padding:4px 12px;border-radius:20px;font-size:12px;font-weight:500;cursor:pointer;border:1px solid var(--border2);background:transparent;color:var(--muted);font-family:var(--sans);transition:all .15s}
+  .chip:hover{border-color:var(--accent);color:var(--text)}
+  .chip.active{background:var(--accent-dim);border-color:var(--accent);color:var(--accent)}
+  .task-list{padding:6px}
+  .task-row{display:flex;align-items:flex-start;gap:10px;padding:10px;border-radius:8px;transition:background .12s}
+  .task-row:hover{background:rgba(255,255,255,.03)}
+  .task-check{width:18px;height:18px;border-radius:5px;border:1.5px solid var(--border2);background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;transition:all .15s}
+  .task-check.done{background:var(--green);border-color:var(--green)}
+  .task-check.done i{color:#fff;font-size:11px}
+  .task-body{flex:1;min-width:0}
+  .task-desc{font-size:13px;line-height:1.4;transition:all .15s;word-break:break-word}
+  .task-desc.done{color:var(--muted);text-decoration:line-through}
+  .task-meta{display:flex;align-items:center;gap:8px;margin-top:4px}
+  .task-id{font-size:10px;font-family:var(--mono);color:var(--muted);background:rgba(255,255,255,.05);padding:1px 5px;border-radius:3px}
+  .task-time{font-size:10px;color:var(--muted)}
+  .status-pill{font-size:10px;font-weight:500;font-family:var(--mono);padding:2px 7px;border-radius:20px;flex-shrink:0}
+  .status-pill.pending{background:var(--amber-dim);color:var(--amber);border:1px solid rgba(245,158,11,.2)}
+  .status-pill.done{background:var(--green-dim);color:var(--green);border:1px solid rgba(16,185,129,.2)}
+  .task-del{background:none;border:none;cursor:pointer;color:transparent;font-size:16px;padding:2px 4px;border-radius:4px;transition:all .15s;flex-shrink:0}
+  .task-row:hover .task-del{color:var(--muted)}
+  .task-del:hover{color:var(--red) !important;background:var(--red-dim)}
+  .empty{padding:40px 20px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:8px}
+  .empty i{font-size:32px;color:var(--border2)}
+  .empty-title{font-size:14px;color:var(--muted)}
+  .empty-sub{font-size:12px;color:var(--border2)}
+  .add-bar{padding:12px;border-top:1px solid var(--border);display:flex;gap:8px}
+  .add-input{flex:1;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text);font-size:13px;font-family:var(--sans);outline:none;transition:border-color .15s}
+  .add-input::placeholder{color:var(--muted)}
+  .add-input:focus{border-color:var(--accent)}
+  .right-col{display:flex;flex-direction:column;gap:12px}
+  .activity-item{display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);font-size:12px}
+  .activity-item:last-child{border-bottom:none}
+  .activity-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;margin-top:3px}
+  .activity-text{color:var(--text);line-height:1.4}
+  .activity-time{color:var(--muted);font-size:10px;font-family:var(--mono);margin-top:2px}
+  .chart-wrap{padding:12px 16px}
+  canvas{width:100% !important}
+  .conn-badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-family:var(--mono);padding:3px 9px;border-radius:20px;border:1px solid var(--border);color:var(--muted)}
+  .conn-dot{width:6px;height:6px;border-radius:50%;background:var(--green)}
+  .conn-dot.offline{background:var(--red)}
+  .loader{display:inline-block;width:16px;height:16px;border:2px solid var(--border2);border-top-color:var(--accent);border-radius:50%;animation:spin .6s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .err-banner{background:var(--red-dim);border:1px solid rgba(239,68,68,.2);border-radius:8px;padding:10px 14px;font-size:12px;color:var(--red);display:flex;align-items:center;gap:8px;margin-bottom:16px}
+  ::-webkit-scrollbar{width:4px}
+  ::-webkit-scrollbar-track{background:transparent}
+  ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+  .fade-in{animation:fadeIn .2s ease}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+</style>
+</head>
+<body>
+<div class="layout">
+  <aside class="sidebar">
+    <div class="logo">
+      <div class="logo-icon">⚡</div>
+      <div>
+        <div class="logo-text">TaskFlow</div>
+        <div class="logo-sub">v1.0 · local</div>
+      </div>
+    </div>
+    <div class="sidebar-section">Workspace</div>
+    <button class="nav-item active" onclick="setFilter('all',this)"><i class="ti ti-layout-list" aria-hidden="true"></i> All Tasks<span class="nav-count" id="count-all">0</span></button>
+    <button class="nav-item" onclick="setFilter('pending',this)"><i class="ti ti-clock" aria-hidden="true"></i> Pending<span class="nav-count" id="count-pending">0</span></button>
+    <button class="nav-item" onclick="setFilter('done',this)"><i class="ti ti-circle-check" aria-hidden="true"></i> Completed<span class="nav-count" id="count-done">0</span></button>
+    <div class="sidebar-section" style="margin-top:8px">Infrastructure</div>
+    <a class="nav-item" href="https://ap-south-1.console.aws.amazon.com/" target="_blank"><i class="ti ti-cloud" aria-hidden="true"></i> AWS Console</a>
+    <a class="nav-item" href="https://ap-south-1.console.aws.amazon.com/ec2/v2/home#LoadBalancers" target="_blank"><i class="ti ti-server" aria-hidden="true"></i> ALB · Port 80</a>
+    <a class="nav-item" href="https://ap-south-1.console.aws.amazon.com/rds/home" target="_blank"><i class="ti ti-database" aria-hidden="true"></i> RDS MySQL</a>
+    <div class="sidebar-stats">
+      <div class="stat-mini">
+        <div class="stat-mini-label">Sprint Progress</div>
+        <div class="stat-mini-bar"><div class="stat-mini-fill" id="sidebar-bar" style="width:0%"></div></div>
+        <div class="stat-mini-nums"><span class="stat-mini-done" id="sb-done">0 done</span><span class="stat-mini-total" id="sb-total">0 total</span></div>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:4px 2px">
+        <span class="conn-badge"><span class="conn-dot" id="conn-dot"></span><span id="conn-label">localhost:80</span></span>
+        <button class="btn btn-ghost" style="padding:4px 8px;font-size:11px" onclick="fetchTasks()"><i class="ti ti-refresh" style="font-size:13px" aria-hidden="true"></i></button>
+      </div>
+    </div>
+  </aside>
+  <div class="main">
+    <header class="topbar">
+      <div>
+        <div class="topbar-title">Task Manager</div>
+        <div class="topbar-sub" id="top-sub">Spring Boot · MySQL · AWS ap-south-1</div>
+      </div>
+      <div class="search-wrap">
+        <i class="ti ti-search" aria-hidden="true"></i>
+        <input class="search-input" placeholder="Search tasks…" id="search-input" oninput="renderTasks()">
+      </div>
+      <button class="btn btn-primary" onclick="document.getElementById('add-input').focus()">
+        <i class="ti ti-plus" aria-hidden="true"></i> New Task
+      </button>
+    </header>
+    <div class="content">
+      <div class="err-banner" id="err-banner" style="display:none">
+        <i class="ti ti-alert-triangle" aria-hidden="true"></i>
+        <span>Cannot connect to <strong>localhost:80</strong> — run <code>docker compose up --build</code></span>
+        <button class="btn btn-ghost" style="margin-left:auto;padding:4px 10px;font-size:11px" onclick="fetchTasks()">Retry</button>
+      </div>
+      <div class="metrics">
+        <div class="metric-card blue"><div class="metric-label">Total Tasks</div><div class="metric-value" id="m-total">—</div><div class="metric-delta" id="m-total-sub">Loading…</div></div>
+        <div class="metric-card green"><div class="metric-label">Completed</div><div class="metric-value" id="m-done" style="color:var(--green)">—</div><div class="metric-delta" id="m-done-sub">—</div></div>
+        <div class="metric-card amber"><div class="metric-label">Pending</div><div class="metric-value" id="m-pending" style="color:var(--amber)">—</div><div class="metric-delta" id="m-pending-sub">—</div></div>
+        <div class="metric-card red"><div class="metric-label">Completion Rate</div><div class="metric-value" id="m-rate" style="color:var(--accent)">—</div><div class="metric-delta" id="m-rate-sub">—</div></div>
+      </div>
+      <div class="task-area">
+        <div class="panel">
+          <div class="panel-header">
+            <i class="ti ti-list-check" style="color:var(--accent);font-size:16px" aria-hidden="true"></i>
+            <span class="panel-title">Tasks</span>
+            <span class="panel-badge" id="panel-badge">0 items</span>
+          </div>
+          <div class="chips">
+            <button class="chip active" onclick="setChip('all',this)">All</button>
+            <button class="chip" onclick="setChip('pending',this)">Pending</button>
+            <button class="chip" onclick="setChip('done',this)">Done</button>
+          </div>
+          <div class="task-list" id="task-list">
+            <div class="empty"><div class="loader"></div><div class="empty-title">Loading tasks…</div></div>
+          </div>
+          <div class="add-bar">
+            <input class="add-input" id="add-input" placeholder="Add a task and press Enter…" onkeydown="if(event.key==='Enter')createTask()">
+            <button class="btn btn-primary" onclick="createTask()"><i class="ti ti-plus" aria-hidden="true"></i> Add</button>
+          </div>
+        </div>
+        <div class="right-col">
+          <div class="panel">
+            <div class="panel-header"><i class="ti ti-chart-bar" style="color:var(--accent);font-size:16px" aria-hidden="true"></i><span class="panel-title">Task Breakdown</span></div>
+            <div class="chart-wrap"><canvas id="chart" height="140"></canvas></div>
+          </div>
+          <div class="panel" style="flex:1">
+            <div class="panel-header"><i class="ti ti-activity" style="color:var(--accent);font-size:16px" aria-hidden="true"></i><span class="panel-title">Activity</span></div>
+            <div style="padding:8px 14px" id="activity-log"><div style="color:var(--muted);font-size:12px;padding:12px 0;text-align:center">No activity yet</div></div>
+          </div>
+          <div class="panel">
+            <div class="panel-header"><i class="ti ti-stack" style="color:var(--accent);font-size:16px" aria-hidden="true"></i><span class="panel-title">Stack</span></div>
+            <div style="padding:10px 14px;display:flex;flex-direction:column;gap:7px">
+              <div style="display:flex;justify-content:space-between;font-size:12px"><span style="color:var(--muted)">Runtime</span><span style="font-family:var(--mono);color:var(--text)">Java 17 · Spring 3.2</span></div>
+              <div style="display:flex;justify-content:space-between;font-size:12px"><span style="color:var(--muted)">Database</span><span style="font-family:var(--mono);color:var(--text)">MySQL 8.0</span></div>
+              <div style="display:flex;justify-content:space-between;font-size:12px"><span style="color:var(--muted)">App port</span><span style="font-family:var(--mono);color:var(--green)">:80</span></div>
+              <div style="display:flex;justify-content:space-between;font-size:12px"><span style="color:var(--muted)">ALB listener</span><span style="font-family:var(--mono);color:var(--green)">:80 → :80</span></div>
+              <div style="display:flex;justify-content:space-between;font-size:12px"><span style="color:var(--muted)">Region</span><span style="font-family:var(--mono);color:var(--text)">ap-south-1</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script>
+const API='';
+let allTasks=[],filter='all',chart=null,activity=[];
+function timeAgo(d){const s=Math.floor((Date.now()-new Date(d))/1000);if(s<60)return'just now';if(s<3600)return Math.floor(s/60)+'m ago';if(s<86400)return Math.floor(s/3600)+'h ago';return Math.floor(s/86400)+'d ago';}
+function logActivity(msg){activity.unshift({msg,time:new Date()});if(activity.length>6)activity.pop();document.getElementById('activity-log').innerHTML=activity.map(a=>`<div class="activity-item fade-in"><span class="activity-dot" style="background:var(--accent)"></span><div><div class="activity-text">${a.msg}</div><div class="activity-time">${timeAgo(a.time)}</div></div></div>`).join('');}
+async function fetchTasks(){try{const r=await fetch(API+'/tasks');if(!r.ok)throw new Error();allTasks=await r.json();document.getElementById('err-banner').style.display='none';document.getElementById('conn-dot').classList.remove('offline');updateMetrics();renderTasks();updateChart();document.getElementById('top-sub').textContent=`Spring Boot · MySQL · AWS ap-south-1 · Last sync ${new Date().toLocaleTimeString()}`;}catch(e){document.getElementById('err-banner').style.display='flex';document.getElementById('conn-dot').classList.add('offline');renderOffline();}}
+function updateMetrics(){const total=allTasks.length,done=allTasks.filter(t=>t.completed).length,pending=total-done,rate=total?Math.round(done/total*100):0;document.getElementById('m-total').textContent=total;document.getElementById('m-done').textContent=done;document.getElementById('m-pending').textContent=pending;document.getElementById('m-rate').textContent=rate+'%';document.getElementById('m-total-sub').textContent=total===0?'No tasks yet':'Tasks in database';document.getElementById('m-done-sub').textContent=done>0?`${rate}% of total`:'None completed';document.getElementById('m-pending-sub').textContent=pending>0?`${pending} remaining`:'All done!';document.getElementById('m-rate-sub').textContent=rate===100?'All done!':rate>50?'Good progress':'Keep going';document.getElementById('count-all').textContent=total;document.getElementById('count-pending').textContent=pending;document.getElementById('count-done').textContent=done;document.getElementById('sb-done').textContent=done+' done';document.getElementById('sb-total').textContent=total+' total';document.getElementById('sidebar-bar').style.width=rate+'%';}
+function getFiltered(){const q=document.getElementById('search-input').value.toLowerCase();return allTasks.filter(t=>{const mf=filter==='all'||(filter==='done'&&t.completed)||(filter==='pending'&&!t.completed);const ms=!q||t.description.toLowerCase().includes(q);return mf&&ms;});}
+function renderTasks(){const list=document.getElementById('task-list'),tasks=getFiltered();document.getElementById('panel-badge').textContent=tasks.length+' items';if(!tasks.length){list.innerHTML=`<div class="empty"><i class="ti ti-clipboard-off" aria-hidden="true"></i><div class="empty-title">${filter==='done'?'Nothing completed yet':filter==='pending'?'All tasks done!':'No tasks yet'}</div><div class="empty-sub">${filter==='all'?'Add a task below to get started':''}</div></div>`;return;}list.innerHTML=tasks.map(t=>`<div class="task-row fade-in"><button class="task-check ${t.completed?'done':''}" onclick="toggleTask(${t.id})" aria-label="${t.completed?'Mark pending':'Mark done'}">${t.completed?'<i class="ti ti-check" aria-hidden="true"></i>':''}</button><div class="task-body"><div class="task-desc ${t.completed?'done':''}">${escHtml(t.description)}</div><div class="task-meta"><span class="task-id">#${t.id}</span>${t.createdAt?`<span class="task-time">${timeAgo(t.createdAt)}</span>`:''}</div></div><span class="status-pill ${t.completed?'done':'pending'}">${t.completed?'Done':'Pending'}</span><button class="task-del" onclick="deleteTask(${t.id})" aria-label="Delete task"><i class="ti ti-x" aria-hidden="true"></i></button></div>`).join('');}
+function renderOffline(){document.getElementById('task-list').innerHTML=`<div class="empty"><i class="ti ti-wifi-off" aria-hidden="true"></i><div class="empty-title">Backend offline</div><div class="empty-sub">Run: docker compose up --build</div></div>`;['m-total','m-done','m-pending','m-rate'].forEach(id=>document.getElementById(id).textContent='—');}
+function escHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function setFilter(f,btn){filter=f;document.querySelectorAll('.nav-item').forEach(b=>b.classList.remove('active'));if(btn)btn.classList.add('active');document.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));const map={all:0,pending:1,done:2};document.querySelectorAll('.chip')[map[f]].classList.add('active');renderTasks();}
+function setChip(f,btn){filter=f;document.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));btn.classList.add('active');renderTasks();}
+async function createTask(){const inp=document.getElementById('add-input'),desc=inp.value.trim();if(!desc)return;inp.value='';try{const r=await fetch(API+'/tasks',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({description:desc,completed:false})});if(!r.ok)throw new Error();const t=await r.json();allTasks.unshift(t);logActivity(`Created: "${desc.length>30?desc.slice(0,30)+'…':desc}"`);updateMetrics();renderTasks();updateChart();}catch(e){inp.value=desc;alert('Failed — is the backend running on port 80?');}}
+async function toggleTask(id){const task=allTasks.find(t=>t.id===id);if(!task)return;const updated={...task,completed:!task.completed};try{const r=await fetch(API+'/tasks/'+id,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(updated)});const saved=r.ok?await r.json():updated;const idx=allTasks.findIndex(t=>t.id===id);allTasks[idx]=saved;logActivity(`${saved.completed?'Completed':'Reopened'}: "${task.description.slice(0,30)}"`);updateMetrics();renderTasks();updateChart();}catch(e){allTasks.find(t=>t.id===id).completed=!task.completed;updateMetrics();renderTasks();updateChart();}}
+async function deleteTask(id){const task=allTasks.find(t=>t.id===id);allTasks=allTasks.filter(t=>t.id!==id);logActivity(`Deleted: "${task?task.description.slice(0,30):'#'+id}"`);updateMetrics();renderTasks();updateChart();try{await fetch(API+'/tasks/'+id,{method:'DELETE'});}catch(e){}}
+function updateChart(){const total=allTasks.length,done=allTasks.filter(t=>t.completed).length,pending=total-done;const ctx=document.getElementById('chart').getContext('2d');if(chart)chart.destroy();chart=new Chart(ctx,{type:'doughnut',data:{labels:['Completed','Pending'],datasets:[{data:[done,pending],backgroundColor:['#10B981','#F59E0B'],borderColor:['#10B981','#F59E0B'],borderWidth:0,hoverOffset:4}]},options:{responsive:true,cutout:'72%',plugins:{legend:{position:'bottom',labels:{color:'#7C90AA',font:{size:11,family:"'DM Sans',sans-serif"},padding:12,boxWidth:10,boxHeight:10}},tooltip:{callbacks:{label:c=>{const pct=total?Math.round(c.parsed/total*100):0;return ` ${c.parsed} tasks (${pct}%)`;}}}}}})}
+fetchTasks();
+setInterval(fetchTasks,30000);
+</script>
+</body>
+</html>
