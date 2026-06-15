@@ -18,4 +18,4 @@ jobs:
           distribution: 'temurin'
 
       - name: SonarCloud Scan
-        run: mvn sonar:sonar -Dsonar.projectKey=d-mestry06_AWS-Infra-springapp -Dsonar.organization=d-mestry06 -Dsonar.host.url=https://sonarcloud.io -Dsonar.login=${{ secrets.SONAR_TOKEN }}
+        run: mvn clean compile sonar:sonar -DskipTests -Dsonar.projectKey=d-mestry06_AWS-Infra-springapp -Dsonar.organization=d-mestry06 -Dsonar.host.url=https://sonarcloud.io -Dsonar.login=${{ secrets.SONAR_TOKEN }}
