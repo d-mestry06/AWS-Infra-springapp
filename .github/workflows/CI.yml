@@ -1,10 +1,9 @@
 name: CI Pipeline
 on:
   workflow_dispatch:
-  # push:
-  #   branches:
-  #     - master 
-  #     - develop
+  push:
+     branches:
+       - main
       
 env:
         DOCKER_IMAGE: dmestry06/task-manager-app:${{ github.sha }}
@@ -14,15 +13,16 @@ jobs:
   build:
     uses: ./.github/workflows/javabuild.yml
     secrets: inherit
-  sonar:
-     uses: ./.github/workflows/sonar.yml
-     needs: build
-     secrets: inherit     
-
+       
   test:
     uses: ./.github/workflows/test.yml
     needs: sonar
-    secrets: inherit  
+    secrets: inherit
+
+  sonar:
+     uses: ./.github/workflows/sonar.yml
+     needs: build
+     secrets: inherit  
 
   imagepush:
     uses: ./.github/workflows/imagepush.yml
