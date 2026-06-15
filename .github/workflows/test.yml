@@ -1,0 +1,13 @@
+# .github/workflows/test.yml
+name: Test
+
+on:
+ workflow_call:
+
+jobs:
+  test:
+    runs-on: java_build
+    #needs: build  # Ensures test only runs after build succeeds
+    steps:
+      - name: Run Unit Tests
+        run: mvn test
