@@ -1,12 +1,13 @@
 # .github/workflows/build.yml
 name: Build
 
-on: 
- workflow_call:
+on:
+  workflow_call:
 
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
@@ -27,23 +28,26 @@ jobs:
       - name: Build with Maven
         run: mvn clean install
 
-      # - name: Upload Build Artifact
-      #   uses: actions/upload-artifact@v3
-      #   with:
-      #     name: jar
-      #     path: target/*.jar
-        
-    #   - name: Configure JFrog CLI
-    # token
-    #     run: |
-    # #         jfrog config add my-artifactory --url=https://trial42aeja.jfrog.io --apikey=${{ secrets.JFROG_TOKEN }}
-    #   - name: Configure JFrog CLI
-    #     uses: jfrog/setup-jfrog-cli@v3
-    #     with:
-    #        version: latest
-    #     env:
-    #        JF_URL: https://trial8tc83f.jfrog.io/
-    #        JF_ACCESS_TOKEN: ${{ secrets.JFROG_TOKEN }}
-    #   - name: Upload JAR to JFrog
-    #     run: |
-    #         jf rt u "target/*.jar" "petjfrog-repo/"     
+      - name: Setup JFrog CLI
+        uses: jfrog/setup-jfrog-cli@v4
+        env:
+          JF_URL: ${{ secrets.ARTIFACTORY_URL }}
+          JF_USER: ${{ secrets.ARTIFACTORY_USERNAME }}
+          JF_PASSWORD: ${{ secrets.ARTIFACTORY_TOKEN }}
+
+      - name: Verify Artifactory Connection
+        run: jf rt ping
+
+      - name: Upload JAR to Artifactory
+        run: |
+          jf rt upload \
+            "target/*.jar" \
+            "${{ secrets.ARTIFACTORY_REPO }}/" \
+            --build-name="maven-build" \
+            --build-number="${{ github.run_number }}"
+
+      - name: Publish Build Info
+        run: |
+          jf rt build-publish \
+            maven-build \
+            ${{ github.run_number }}
